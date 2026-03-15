@@ -1,0 +1,486 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Missingno. Stat Calculator</title>
+
+<link rel="icon" type="image/png" href="missingno.webp">
+
+<link href="https://fonts.googleapis.com/css2?family=Share+Tech+Mono&family=Rajdhani:wght@400;600;700&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --bg: #000000;
+    --surface: #0a0a0a;
+    --surface2: #111111;
+    --border: #1a2a2a;
+    --teal: #008080;
+    --teal-light: #00b3b3;
+    --teal-dim: #004040;
+    --teal-glow: rgba(0,128,128,0.18);
+    --red: #e05555;
+    --green: #33cc88;
+    --text: #d0e8e8;
+    --muted: #519a9a;
+    --mono: 'Share Tech Mono', monospace;
+    --sans: 'Rajdhani', sans-serif;
+    --c-hp:    #bb66ff;
+    --c-atk:   #ff5555;
+    --c-def:   #ff9933;
+    --c-spatk: #44dd88;
+    --c-spdef: #44aaff;
+    --c-spd:   #eecc00;
+    --c-level: #aabbcc;
+  }
+  * { margin:0; padding:0; box-sizing:border-box; }
+  body { background:var(--bg); color:var(--text); font-family:var(--mono); min-height:100vh; overflow-x:hidden; font-size:14px; }
+
+  .app {
+    max-width:680px; margin:0 auto;
+    padding:36px 20px 52px;
+    min-height:100vh;
+    display:flex; flex-direction:column; align-items:center; justify-content:center;
+  }
+
+  /* SCREENS */
+  .screen { display:none; width:100%; }
+  .screen.active { display:flex; flex-direction:column; align-items:center; animation:fadeUp .25s ease; }
+  @keyframes fadeUp {
+    from { opacity:0; transform:translateY(10px); }
+    to   { opacity:1; transform:translateY(0); }
+  }
+
+  /* LOGO */
+  .logo { font-family:var(--sans); font-weight:700; font-size:clamp(23px,5.5vw,32px); color:var(--teal); letter-spacing:5px; text-align:center; margin-bottom:4px; text-transform:uppercase; }
+  .logo-sub { font-family:var(--mono); font-size:11px; color:var(--muted); letter-spacing:3px; text-align:center; margin-bottom:26px; }
+
+  /* CARD */
+  .card { background:var(--surface); border:1px solid var(--border); width:100%; padding:28px 26px; position:relative; }
+  .card::before { content:''; position:absolute; top:0; left:0; right:0; height:1px; background:var(--teal); opacity:.7; }
+
+  /* IV TRACKER */
+  .iv-tracker { display:flex; gap:6px; width:100%; margin-bottom:20px; }
+  .iv-slot {
+    flex:1; border:1px solid var(--border); background:var(--surface2);
+    padding:7px 4px; text-align:center; transition:border-color .3s;
+  }
+  .iv-slot.done  { border-color:var(--teal-dim); }
+  .iv-slot.active{ border-color:var(--teal); box-shadow:0 0 8px var(--teal-glow); }
+  .iv-slot .slot-label { display:block; font-size:9px; color:var(--muted); letter-spacing:1px; margin-bottom:4px; }
+  .iv-slot .slot-val   { display:block; font-family:var(--mono); font-size:15px; color:var(--muted); transition:color .3s; }
+  .iv-slot.active .slot-val { color:var(--teal-light); }
+  .iv-slot[data-stat="hpi"].done    .slot-val { color:var(--c-hp); }
+  .iv-slot[data-stat="atki"].done   .slot-val { color:var(--c-atk); }
+  .iv-slot[data-stat="defi"].done   .slot-val { color:var(--c-def); }
+  .iv-slot[data-stat="spatki"].done .slot-val { color:var(--c-spatk); }
+  .iv-slot[data-stat="spdefi"].done .slot-val { color:var(--c-spdef); }
+  .iv-slot[data-stat="spdi"].done   .slot-val { color:var(--c-spd); }
+  .iv-slot[data-stat="level"].done  .slot-val { color:var(--c-level); }
+
+  /* PROGRESS BAR */
+  .progress-bar { width:100%; height:3px; background:var(--border); margin-bottom:26px; overflow:hidden; }
+  .progress-fill { height:100%; background:var(--teal); transition:width .35s ease; }
+
+  /* CURRENT STAT NAME */
+  .stat-row { display:flex; align-items:baseline; gap:16px; margin-bottom:20px; }
+  .current-stat-name {
+    font-family:var(--sans); font-weight:700;
+    font-size:clamp(42px,11vw,68px);
+    letter-spacing:2px; line-height:1;
+    transition:color .2s;
+  }
+  .current-stat-name.pop { animation:statPop .35s ease; }
+  @keyframes statPop {
+    0%  { transform:scale(.65); opacity:.2; }
+    65% { transform:scale(1.1); }
+    100%{ transform:scale(1);   opacity:1; }
+  }
+  .q-counter { font-size:11px; color:var(--muted); margin-left:auto; }
+
+  /* QUESTION */
+  .q-label { font-size:11px; color:var(--muted); letter-spacing:2px; text-transform:uppercase; margin-bottom:10px; }
+  .q-number {
+    font-family:var(--sans); font-weight:700;
+    font-size:clamp(54px,14.5vw,84px);
+    color:var(--teal-light); line-height:1; margin-bottom:6px;
+  }
+  .q-range { font-size:12px; color:var(--muted); margin-bottom:26px; }
+
+  /* CMD BUTTON */
+  .cmd-btn {
+    width:100%; background:#050f0f; border:1px solid var(--teal-dim);
+    padding:14px 16px; color:var(--green); font-family:var(--mono);
+    font-size:clamp(10px,2.3vw,13px); cursor:pointer;
+    text-align:left; word-break:break-all; line-height:1.7;
+    transition:border-color .2s, background .2s;
+    margin-bottom:20px; position:relative;
+  }
+  .cmd-btn:hover { border-color:var(--teal); background:#0a1a1a; }
+  .cmd-prefix { color:var(--teal); }
+  .cmd-copied-label { position:absolute; top:10px; right:12px; font-size:11px; color:var(--teal-light); opacity:0; transition:opacity .3s; pointer-events:none; }
+  .cmd-btn.copied .cmd-copied-label { opacity:1; }
+
+  /* YES / NO */
+  .yn-row { display:grid; grid-template-columns:1fr 1fr; gap:12px; }
+  .btn {
+    font-family:var(--sans); font-weight:700; font-size:20px; letter-spacing:2px;
+    padding:22px; border:1px solid transparent; cursor:pointer;
+    background:var(--surface2); color:var(--muted);
+    transition:background .15s, border-color .15s, transform .1s;
+  }
+  .btn:active { transform:scale(.97); }
+  .btn-yes { border-color:rgba(51,204,136,.3); color:var(--green); }
+  .btn-yes:hover { background:rgba(51,204,136,.08); border-color:var(--green); }
+  .btn-no  { border-color:rgba(224,85,85,.3); color:var(--red); }
+  .btn-no:hover  { background:rgba(224,85,85,.08); border-color:var(--red); }
+
+  /* PRIMARY */
+  .btn-primary {
+    font-family:var(--sans); font-weight:700; font-size:17px; letter-spacing:3px;
+    padding:16px 40px; background:var(--teal); color:#000;
+    border:none; cursor:pointer; transition:background .2s, transform .1s; margin-top:20px;
+  }
+  .btn-primary:hover { background:var(--teal-light); }
+  .btn-primary:active { transform:scale(.97); }
+
+  /* INTRO */
+  .intro-body { font-size:14px; line-height:2; color:#4a7a7a; margin-bottom:24px; }
+  .intro-body h3 { font-family:var(--sans); font-weight:700; font-size:15px; color:var(--teal); letter-spacing:2px; margin:20px 0 10px; text-transform:uppercase; }
+  .step-list { list-style:none; counter-reset:s; }
+  .step-list li {
+    counter-increment:s; padding:9px 0 9px 36px; position:relative;
+    border-bottom:1px solid #0d1a1a; font-size:13px; color:#519a9a;
+  }
+  .step-list li strong { color: var(--green); }
+  .step-list li::before {
+    content:counter(s); position:absolute; left:0; top:9px;
+    font-size:10px; color:var(--teal); width:22px; height:22px;
+    border:1px solid var(--teal-dim); display:flex; align-items:center; justify-content:center;
+  }
+  .tag { display:inline-block; background:#001a1a; color:var(--teal-light); border:1px solid var(--teal-dim); padding:2px 7px; font-size:12px; }
+
+  /* ORIGIN */
+  .origin-row { display:grid; grid-template-columns:1fr 1fr; gap:12px; }
+  .origin-btn {
+    font-family:var(--sans); font-weight:600; font-size:16px; letter-spacing:1px;
+    padding:26px 14px; border:1px solid var(--border); background:var(--surface2);
+    color:var(--muted); cursor:pointer; text-align:center;
+    transition:all .2s; line-height:2; text-transform:uppercase;
+  }
+  .origin-btn:hover { border-color:var(--teal); color:var(--teal-light); background:#0a1a1a; }
+  .origin-btn .range-hint { display:block; font-family:var(--mono); font-size:11px; color:var(--muted); margin-top:5px; }
+
+  /* SEP */
+  .sep { width:100%; height:1px; background:var(--border); margin:20px 0; }
+
+  /* RESULTS GRID */
+  .results-grid { display:grid; grid-template-columns:repeat(7,1fr); gap:6px; width:100%; margin-bottom:20px; }
+  .r-cell { background:var(--surface2); border:1px solid var(--border); padding:16px 4px; text-align:center; }
+  .r-cell .rl { display:block; font-size:10px; color:var(--muted); margin-bottom:8px; letter-spacing:1px; }
+  .r-cell .rv { display:block; font-family:var(--sans); font-weight:700; font-size:24px; }
+  .r-cell.iv-cell { grid-column:1/-1; background:#001a1a; border-color:var(--teal-dim); padding:18px; }
+  .r-cell.iv-cell .rv { font-size:32px; color:var(--teal-light); }
+
+  /* OUTPUT */
+  .output-block {
+    background:#050f0f; border:1px solid var(--teal-dim);
+    padding:15px 16px; width:100%; font-family:var(--mono);
+    font-size:clamp(11px,2.5vw,13px); color:var(--teal-light);
+    word-break:break-all; line-height:1.8; margin-bottom:16px;
+    cursor:pointer; transition:border-color .2s; position:relative;
+  }
+  .output-block:hover { border-color:var(--teal); }
+  .copy-hint { position:absolute; top:8px; right:10px; font-size:10px; color:var(--muted); }
+
+  /* CONFIRM LABEL */
+  .confirm-lbl { font-size:11px; color:var(--muted); letter-spacing:2px; text-align:center; text-transform:uppercase; margin-bottom:14px; }
+
+  /* FINAL */
+  .final-out {
+    background:#001a1a; border:1px solid var(--teal);
+    padding:22px 18px; width:100%; font-family:var(--mono);
+    font-size:clamp(13px,3vw,17px); color:var(--teal-light);
+    text-align:center; line-height:2.2; word-break:break-all;
+    cursor:pointer; transition:box-shadow .2s; margin-bottom:18px;
+  }
+  .final-out:hover { box-shadow:0 0 16px var(--teal-glow); }
+
+  .tooltip { font-size:12px; color:var(--muted); text-align:center; margin-top:10px; }
+</style>
+</head>
+<body>
+<div class="app">
+
+  <!-- INTRO -->
+  <div class="screen active" id="screen-intro">
+    <div class="logo">Pokénator</div>
+    <div class="logo-sub">Missingno. Stat Calculator</div>
+    <div class="card">
+      <div class="intro-body">
+        <h3>What to do?</h3>
+        <ol class="step-list">
+          <li>You'll be given a <span class="tag">@Pokétwo</span> command to paste.</li>
+          <li>Answer <strong>YES</strong> if the stat is greater than the number shown, <strong><span style="color:var(--red)">NO</span></strong> if it's not.</li>
+          <li>Repeat for all 7 stats: HP · ATK · DEF · SpATK · SpDEF · SPD · Level.</li>
+        </ol>
+      </div>
+      <div style="text-align:center">
+        <button class="btn-primary" onclick="startCalc()">START →</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- LEVEL ORIGIN -->
+  <div class="screen" id="screen-origin">
+    <div class="logo">Pokénator</div>
+    <div class="logo-sub">Missingno. Stat Calculator</div>
+    <div class="card">
+      <div class="iv-tracker" id="origin-tracker"></div>
+      <div class="progress-bar"><div class="progress-fill" id="origin-prog"></div></div>
+      <div class="stat-row">
+        <span class="current-stat-name" style="color:var(--c-level)">LEVEL</span>
+      </div>
+      <p class="q-label">Was this Pokémon...</p>
+      <div class="origin-row">
+        <button class="origin-btn" onclick="setOrigin('caught')">🎣 CAUGHT<span class="range-hint">Level 0 – 50</span></button>
+        <button class="origin-btn" onclick="setOrigin('boxed')">📦 BOXED<span class="range-hint">Level 50 – 100</span></button>
+      </div>
+    </div>
+  </div>
+
+  <!-- QUESTION -->
+  <div class="screen" id="screen-question">
+    <div class="logo">Pokénator</div>
+    <div class="logo-sub">Missingno. Stat Calculator</div>
+    <div class="card">
+      <div class="iv-tracker" id="q-tracker"></div>
+      <div class="progress-bar"><div class="progress-fill" id="q-prog"></div></div>
+      <div class="stat-row">
+        <span class="current-stat-name" id="q-stat-name">HP</span>
+        <span class="q-counter" id="q-counter">Q 1/5</span>
+      </div>
+      <p class="q-label">Is the stat greater than...</p>
+      <div class="q-number" id="q-midpoint">15</div>
+      <p class="q-range" id="q-range">Range: 0 – 31</p>
+      <button class="cmd-btn" id="q-cmd" onclick="copyCmd(this)">
+        <span class="cmd-prefix">» </span><span id="cmd-text">@Pokétwo#8236 p --n missingno --hpi > 15</span>
+        <span class="cmd-copied-label">COPIED</span>
+      </button>
+      <div class="yn-row">
+        <button class="btn btn-yes" onclick="answer(true)">YES</button>
+        <button class="btn btn-no"  onclick="answer(false)">NO</button>
+      </div>
+      <p class="tooltip">tap/click command to copy</p>
+    </div>
+  </div>
+
+  <!-- CONFIRM -->
+  <div class="screen" id="screen-confirm">
+    <div class="logo">Pokénator</div>
+    <div class="logo-sub">Missingno. Stat Calculator</div>
+    <div class="card">
+      <p class="confirm-lbl" style="color:var(--teal-light);margin-bottom:16px">ALL STATS CALCULATED</p>
+      <div class="results-grid" id="results-grid"></div>
+      <div class="sep"></div>
+      <p class="confirm-lbl">Paste this to double check</p>
+      <div class="output-block" onclick="copyOutput(this)" id="discord-output">
+        <span id="discord-output-text"></span>
+      </div>
+      <p class="confirm-lbl">Is this correct?</p>
+      <div class="yn-row">
+        <button class="btn btn-yes" onclick="confirmResult(true)">YES ✓</button>
+        <button class="btn btn-no"  onclick="confirmResult(false)">NO ✗</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- FINAL -->
+  <div class="screen" id="screen-final">
+    <div class="logo">Pokénator</div>
+    <div class="logo-sub">Missingno. Stat Calculator</div>
+    <div class="card" style="text-align:center">
+      <p class="confirm-lbl" style="color:var(--teal-light);margin-bottom:20px">Nickname if required:</p>
+      <div class="final-out" id="final-output" onclick="copyFinal(this)">
+        <span id="final-text"></span>
+      </div>
+      <p class="tooltip">tap/click to copy</p>
+      <button class="btn-primary" onclick="restart()">CALCULATE ANOTHER →</button>
+    </div>
+  </div>
+
+</div>
+<script>
+const STATS = [
+  { key:'hpi',    label:'HP',    color:'var(--c-hp)',    min:0,  max:31  },
+  { key:'atki',   label:'ATK',   color:'var(--c-atk)',   min:0,  max:31  },
+  { key:'defi',   label:'DEF',   color:'var(--c-def)',   min:0,  max:31  },
+  { key:'spatki', label:'SpATK', color:'var(--c-spatk)', min:0,  max:31  },
+  { key:'spdefi', label:'SpDEF', color:'var(--c-spdef)', min:0,  max:31  },
+  { key:'spdi',   label:'SPD',   color:'var(--c-spd)',   min:0,  max:31  },
+  { key:'level',  label:'LEVEL', color:'var(--c-level)', min:0,  max:100 },
+];
+
+let state = {};
+let prevStatIdx = -1;
+
+function initState() {
+  STATS[6].min = 0; STATS[6].max = 100;
+  state = { statIdx:0, lo:0, hi:31, questionNum:0, results:{}, levelOriginSet:false };
+}
+
+function showScreen(id) {
+  document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
+  document.getElementById('screen-' + id).classList.add('active');
+}
+
+function startCalc() { initState(); nextStat(); }
+
+function nextStat() {
+  if (state.statIdx >= STATS.length) { showConfirm(); return; }
+  const stat = STATS[state.statIdx];
+  if (stat.key === 'level' && !state.levelOriginSet) {
+    updateTracker('origin-tracker');
+    updateProgBar('origin-prog');
+    showScreen('origin');
+    return;
+  }
+  state.lo = stat.min; state.hi = stat.max; state.questionNum = 0;
+  updateQuestion();
+  showScreen('question');
+}
+
+function setOrigin(type) {
+  state.levelOriginSet = true;
+  STATS[6].min = type === 'caught' ? 0 : 50;
+  STATS[6].max = type === 'caught' ? 50 : 100;
+  state.lo = STATS[6].min; state.hi = STATS[6].max; state.questionNum = 0;
+  updateQuestion();
+  showScreen('question');
+}
+
+function getMid() { return Math.floor((state.lo + state.hi) / 2); }
+
+function answer(isGreater) {
+  const m = getMid();
+  if (isGreater) state.lo = m + 1; else state.hi = m;
+  state.questionNum++;
+  if (state.lo >= state.hi) {
+    state.results[STATS[state.statIdx].key] = state.lo;
+    state.statIdx++;
+    nextStat();
+  } else {
+    updateQuestion();
+  }
+}
+
+function stepsFor(s) { return Math.ceil(Math.log2(s.max - s.min + 2)); }
+
+function updateTracker(id) {
+  const el = document.getElementById(id);
+  if (!el) return;
+  el.innerHTML = STATS.map((s, i) => {
+    const done   = i < state.statIdx;
+    const active = i === state.statIdx;
+    const val    = done ? state.results[s.key] : (active ? '·' : '_');
+    const cls    = done ? 'done' : (active ? 'active' : '');
+    return `<div class="iv-slot ${cls}" data-stat="${s.key}">
+      <span class="slot-label">${s.label}</span>
+      <span class="slot-val">${val}</span>
+    </div>`;
+  }).join('');
+}
+
+function updateProgBar(id) {
+  const total = STATS.reduce((a, s) => a + stepsFor(s), 0);
+  const done  = STATS.slice(0, state.statIdx).reduce((a, s) => a + stepsFor(s), 0) + state.questionNum;
+  const el = document.getElementById(id);
+  if (el) el.style.width = Math.min(100, (done / total) * 100) + '%';
+}
+
+function updateQuestion() {
+  const stat = STATS[state.statIdx];
+  const m = getMid();
+
+  const nameEl = document.getElementById('q-stat-name');
+  if (prevStatIdx !== state.statIdx) {
+    nameEl.classList.remove('pop');
+    void nameEl.offsetWidth;
+    nameEl.classList.add('pop');
+    prevStatIdx = state.statIdx;
+  }
+  nameEl.textContent = stat.label;
+  nameEl.style.color = stat.color;
+
+  document.getElementById('q-counter').textContent = `Q ${state.questionNum + 1}/${stepsFor(stat)}`;
+  document.getElementById('q-midpoint').textContent = m;
+  document.getElementById('q-range').textContent = `Range: ${state.lo} – ${state.hi}`;
+  document.getElementById('cmd-text').textContent = `@Pokétwo#8236 p --n missingno --${stat.key} > ${m}`;
+  document.getElementById('q-cmd').classList.remove('copied');
+
+  updateTracker('q-tracker');
+  updateProgBar('q-prog');
+}
+
+function copyCmd(btn) {
+  navigator.clipboard.writeText(document.getElementById('cmd-text').textContent).catch(()=>{});
+  btn.classList.add('copied');
+  setTimeout(() => btn.classList.remove('copied'), 1400);
+}
+
+const STAT_COLORS = {
+  hpi:'var(--c-hp)', atki:'var(--c-atk)', defi:'var(--c-def)',
+  spatki:'var(--c-spatk)', spdefi:'var(--c-spdef)', spdi:'var(--c-spd)', level:'var(--c-level)'
+};
+
+function showConfirm() {
+  const r = state.results;
+  const keys = ['hpi','atki','defi','spatki','spdefi','spdi'];
+  const avg = keys.reduce((a, k) => a + (r[k] / 31) * 100, 0) / keys.length;
+  state.avgIV = avg.toFixed(2);
+
+  const defs = [
+    {key:'hpi',lbl:'HP'},{key:'atki',lbl:'ATK'},{key:'defi',lbl:'DEF'},
+    {key:'spatki',lbl:'SpATK'},{key:'spdefi',lbl:'SpDEF'},{key:'spdi',lbl:'SPD'},{key:'level',lbl:'LVL'},
+  ];
+  document.getElementById('results-grid').innerHTML =
+    defs.map(s => `<div class="r-cell"><span class="rl">${s.lbl}</span><span class="rv" style="color:${STAT_COLORS[s.key]}">${r[s.key]}</span></div>`).join('') +
+    `<div class="r-cell iv-cell"><span class="rl">Total IV %</span><span class="rv">${avg.toFixed(2)}%</span></div>`;
+
+  state.discordCmd = `<@716390085896962058> p --n missingno. --level ${r.level} --hpi ${r.hpi} --atki ${r.atki} --defi ${r.defi} --spatki ${r.spatki} --spdefi ${r.spdefi} --spdi ${r.spdi} --iv ${avg.toFixed(2)}`;
+  document.getElementById('discord-output-text').textContent = state.discordCmd;
+  showScreen('confirm');
+}
+
+function copyOutput(el) {
+  navigator.clipboard.writeText(state.discordCmd).catch(()=>{});
+  el.style.borderColor = 'var(--teal)';
+  setTimeout(() => el.style.borderColor = 'var(--teal-dim)', 1000);
+}
+
+function confirmResult(yes) {
+  if (!yes) {
+    prevStatIdx = -1;
+    initState();
+    nextStat();
+    return;
+  }
+  const r = state.results;
+  state.finalLine = `Lvl. ${r.level} |​| ${r.hpi} | ${r.atki} | ${r.defi} | ${r.spatki} | ${r.spdefi} | ${r.spdi} |​| ${state.avgIV}%`;
+  document.getElementById('final-text').textContent = state.finalLine;
+  showScreen('final');
+}
+
+function copyFinal(el) {
+  navigator.clipboard.writeText(state.finalLine).catch(()=>{});
+  el.style.boxShadow = '0 0 24px var(--teal-glow)';
+  setTimeout(() => el.style.boxShadow = '', 900);
+}
+
+function restart() {
+  prevStatIdx = -1;
+  initState();
+  showScreen('intro');
+}
+</script>
+</body>
+</html>
