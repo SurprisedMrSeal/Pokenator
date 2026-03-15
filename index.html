@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Missingno. Stat Calculator</title>
+<title>Missingno Stat Calculator</title>
 
 <link rel="icon" type="image/png" href="missingno.webp">
 
@@ -214,26 +214,24 @@
   <!-- INTRO -->
   <div class="screen active" id="screen-intro">
     <div class="logo">Pokénator</div>
-    <div class="logo-sub">Missingno. Stat Calculator</div>
+    <div class="logo-sub">MissingNo Stat Calculator</div>
     <div class="card">
       <div class="intro-body">
         <h3>What to do?</h3>
         <ol class="step-list">
           <li>You'll be given a <span class="tag">@Pokétwo</span> command to paste.</li>
-          <li>Answer <strong>YES</strong> if the stat is greater than the number shown, <strong><span style="color:var(--red)">NO</span></strong> if it's not.</li>
+          <li>Select <strong>YES</strong> if the stat is greater than the number shown, <strong><span style="color:var(--red)">NO</span></strong> if it's not.</li>
           <li>Repeat for all 7 stats: HP · ATK · DEF · SpATK · SpDEF · SPD · Level.</li>
         </ol>
       </div>
       <div style="text-align:center">
-        <button class="btn-primary" onclick="startCalc()">START →</button>
+        <button class="btn-primary" onclick="startCalc()">START</button>
       </div>
     </div>
   </div>
 
   <!-- LEVEL ORIGIN -->
   <div class="screen" id="screen-origin">
-    <div class="logo">Pokénator</div>
-    <div class="logo-sub">Missingno. Stat Calculator</div>
     <div class="card">
       <div class="iv-tracker" id="origin-tracker"></div>
       <div class="progress-bar"><div class="progress-fill" id="origin-prog"></div></div>
@@ -250,8 +248,6 @@
 
   <!-- QUESTION -->
   <div class="screen" id="screen-question">
-    <div class="logo">Pokénator</div>
-    <div class="logo-sub">Missingno. Stat Calculator</div>
     <div class="card">
       <div class="iv-tracker" id="q-tracker"></div>
       <div class="progress-bar"><div class="progress-fill" id="q-prog"></div></div>
@@ -276,8 +272,6 @@
 
   <!-- CONFIRM -->
   <div class="screen" id="screen-confirm">
-    <div class="logo">Pokénator</div>
-    <div class="logo-sub">Missingno. Stat Calculator</div>
     <div class="card">
       <p class="confirm-lbl" style="color:var(--teal-light);margin-bottom:16px">ALL STATS CALCULATED</p>
       <div class="results-grid" id="results-grid"></div>
@@ -297,7 +291,7 @@
   <!-- FINAL -->
   <div class="screen" id="screen-final">
     <div class="logo">Pokénator</div>
-    <div class="logo-sub">Missingno. Stat Calculator</div>
+    <div class="logo-sub">MissingNo Stat Calculator</div>
     <div class="card" style="text-align:center">
       <p class="confirm-lbl" style="color:var(--teal-light);margin-bottom:20px">Nickname if required:</p>
       <div class="final-out" id="final-output" onclick="copyFinal(this)">
@@ -446,7 +440,7 @@ function showConfirm() {
     defs.map(s => `<div class="r-cell"><span class="rl">${s.lbl}</span><span class="rv" style="color:${STAT_COLORS[s.key]}">${r[s.key]}</span></div>`).join('') +
     `<div class="r-cell iv-cell"><span class="rl">Total IV %</span><span class="rv">${avg.toFixed(2)}%</span></div>`;
 
-  state.discordCmd = `<@716390085896962058> p --n missingno. --level ${r.level} --hpi ${r.hpi} --atki ${r.atki} --defi ${r.defi} --spatki ${r.spatki} --spdefi ${r.spdefi} --spdi ${r.spdi} --iv ${avg.toFixed(2)}`;
+  state.discordCmd = `@Pokétwo#8236 p --n missingno --level ${r.level} --hpi ${r.hpi} --atki ${r.atki} --defi ${r.defi} --spatki ${r.spatki} --spdefi ${r.spdefi} --spdi ${r.spdi} --iv ${avg.toFixed(2)}`;
   document.getElementById('discord-output-text').textContent = state.discordCmd;
   showScreen('confirm');
 }
