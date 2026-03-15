@@ -6,11 +6,22 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Missingno Stat Calculator</title>
 
-  <link rel="icon" type="image/png" href="missingno.webp">
+  <link rel="icon" type="image/png" href="./images/missingno.webp">
 
-  <link href="https://fonts.googleapis.com/css2?family=Share+Tech+Mono&family=Rajdhani:wght@400;600;700&display=swap"
-    rel="stylesheet">
+
   <style>
+    @font-face {
+      font-family: 'Fredoka';
+      src: url('./fonts/Fredoka-VariableFont_wdth,wght.ttf') format('truetype');
+      font-weight: normal;
+    }
+
+    @font-face {
+      font-family: 'Louis George Cafe';
+      src: url('./fonts/Louis George Cafe.ttf') format('truetype');
+      font-weight: normal;
+    }
+
     :root {
       --bg: #000000;
       --surface: #0a0a0a;
@@ -24,8 +35,8 @@
       --green: #33cc88;
       --text: #d0e8e8;
       --muted: #519a9a;
-      --mono: 'Share Tech Mono', monospace;
-      --sans: 'Rajdhani', sans-serif;
+      --mono: 'Louis George Cafe', monospace;
+      --sans: 'Fredoka', sans-serif;
       --c-hp: #bb66ff;
       --c-atk: #ff5555;
       --c-def: #ff9933;
@@ -43,11 +54,24 @@
 
     body {
       background: var(--bg);
+      background-image: url('./images/background.png');
+      background-size: cover;
+      background-position: center;
+      background-attachment: scroll;
       color: var(--text);
       font-family: var(--mono);
       min-height: 100vh;
       overflow-x: hidden;
       font-size: 14px;
+    }
+
+    body::before {
+      content: '';
+      position: fixed;
+      inset: 0;
+      background: rgba(0, 0, 0, 0.7);
+      z-index: 0;
+      pointer-events: none;
     }
 
     .app {
@@ -59,6 +83,9 @@
       flex-direction: column;
       align-items: center;
       justify-content: center;
+            position: relative;
+      z-index: 1;
+
     }
 
     /* SCREENS */
@@ -690,8 +717,8 @@
         </div>
         <p class="confirm-lbl">Is this correct?</p>
         <div class="yn-row">
-          <button class="btn btn-yes" onclick="confirmResult(true)">YES ✓</button>
-          <button class="btn btn-no" onclick="confirmResult(false)">NO ✗</button>
+          <button class="btn btn-yes" onclick="confirmResult(true)">YES</button>
+          <button class="btn btn-no" onclick="confirmResult(false)">NO</button>
         </div>
       </div>
     </div>
@@ -706,7 +733,7 @@
           <span id="final-text"></span>
         </div>
         <p class="tooltip">tap/click to copy</p>
-        <button class="btn-primary" onclick="restart()">CALCULATE ANOTHER →</button>
+        <button class="btn-primary" onclick="restart()">CALCULATE ANOTHER</button>
       </div>
     </div>
 
